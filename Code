@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <title>IPRA Environmental Report Card</title>
+    <!-- Viewport for mobile responsiveness -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Optional meta description -->
+    <meta name="description" content="Environmental Report Card for IPRA with collapsible sections and capped points.">
+
+    <!-- Google Font (Roboto) -->
+    <link rel="stylesheet" 
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+
+    <style>
+        /* ========== BASIC PAGE & CONTAINER STYLES ========== */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto', sans-serif; 
+            background-color: #f4f4f4;
+            margin: 20px;
+            padding: 20px;
+            line-height: 1.6; /* improves readability */
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto; /* center the container */
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        /* ========== TITLE & HEADINGS ========== */
+        .main-title {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        /* ========== COLLAPSIBLE SECTIONS ========== */
+        .section-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-top: 25px;
+            margin-bottom: 5px;
+            padding: 12px;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer; /* indicates clickable area */
+            transition: background 0.3s; /* subtle hover effect */
+            position: relative; /* for arrow positioning */
+        }
+        /* Arrow indicator (▼) at the right end of each section title */
+        .section-title::after {
+            content: "▼";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            transition: transform 0.3s;
+        }
+        /* Rotate arrow when collapsed */
+        .section-title.collapsed::after {
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        /* Example background colors for each section */
+        .general { background-color: rgba(48, 93, 82, 0.7); }
+        .admin-finance { background-color: rgba(93, 48, 82, 0.7); }
+        .facility-management { background-color: rgba(82, 48, 93, 0.7); }
+        .fleet-management { background-color: rgba(93, 82, 48, 0.7); }
+        .parks-natural { background-color: rgba(48, 82, 93, 0.7); }
+        .planning-open-space { background-color: rgba(82, 93, 48, 0.7); }
+        .programming { background-color: rgba(93, 48, 48, 0.7); }
+
+        /* On hover, slightly darken the background to show it's clickable */
+        .section-title:hover {
+            filter: brightness(0.95);
+        }
+
+        .section-content {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            overflow: hidden; /* simple show/hide approach */
+        }
+        .hidden {
+            display: none;
+        }
+
+        /* ========== QUESTION & SUB-QUESTION STYLES ========== */
+        /* Container that holds the three fields side by side */
+        .inline-fields {
+            display: flex;          /* enable Flexbox for horizontal layout */
+            gap: 1rem;              /* spacing between columns */
+            flex-wrap: wrap;        /* wrap to next line if too narrow */
+            align-items: flex-end;  /* align bottoms of fields, or 'center' if you prefer */
+            margin-bottom: 1.5rem;  /* spacing below the row */
+        }
+
+        /* Each .field is one column: label + input stacked vertically */
+        .inline-fields .field {
+            flex: 1;                /* each field grows/shrinks equally */
+            min-width: 200px;       /* ensures they don’t get too squished */
+            display: flex;
+            flex-direction: column; /* label above input */
+        }
+
+        /* Modern label styling */
+        .inline-fields .field label {
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+            color: #333;            /* dark gray text */
+        }
+
+        /* Modern input styling */
+        .inline-fields .field input[type="text"],
+        .inline-fields .field input[type="email"] {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ccc;         /* subtle gray border */
+            border-radius: 4px;             /* slightly rounded corners */
+            font-size: 1.25rem;            /* consistent text size */
+            transition: border-color 0.3s, box-shadow 0.3s; /* smooth focus effect */
+        }
+
+        /* Focus state: highlight with a green accent (customize color as you wish) */
+        .inline-fields .field input[type="text"]:focus,
+        .inline-fields .field input[type="email"]:focus {
+            outline: none;                  /* remove default outline */
+            border-color: #66BB6A;          /* green accent border */
+            box-shadow: 0 0 0 2px rgba(102, 187, 106, 0.2); /* subtle glow */
+        }
+
+        .question {
+            background: #fff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 24px;
+        }
+        .question label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .question input[type="radio"],
+        .question input[type="checkbox"] {
+            margin-right: 6px;
+        }
+
+        /* Sub-question styling */
+        .sub-question {
+            margin-left: 60px;
+            margin-top: 10px;
+            font-style: italic;
+            font-size: 24px;
+            color: #305D52;
+        }
+        .sub-question label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* ========== HIGHLIGHT POINTS & SUBTOTALS ========== */
+        .highlight-points {
+            color: #d00000;
+            font-weight: bold;
+            font-size: 32px;
+        }
+
+        /* ========== SUBMIT BUTTON (IF NEEDED) ========== */
+        .submit-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #305D52;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 24px;
+            transition: background 0.3s;
+        }
+        .submit-btn:hover {
+            background: #224137;
+        }
+        /* Print Styles */
+@media print {
+    /* Hide buttons and interactive elements */
+    .submit-btn, button, input[type="checkbox"], input[type="radio"], input[type="text"], input[type="email"] {
+        display: none !important;
+    }
+
+    /* Ensure full form prints */
+    .hidden {
+        display: block !important;
+    }
+
+    /* Remove background colors for better readability */
+    body, .container {
+        background: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Remove unnecessary spacing */
+    .container {
+        padding: 0;
+    }
+
+    /* Adjust font sizes for print readability */
+    body {
+        font-size: 14px;
+        color: #000;
+    }
+}
+
+    </style>
+
+    <script>
+      /* ========== 1) Define your cappedGroups object  ========== */
+      const cappedGroups = {
+        // Example group: "funding"
+        funding: {
+          names: [
+            "funding_recycling",
+            "funding_energy_audits",
+            "funding_natural_maintenance",
+            "funding_natural_restoration",
+            "funding_native_landscaping",
+            "funding_stormwater",
+            "funding_purchasing",
+            "funding_alternative_fuel",
+            "funding_energy_conservation",
+            "funding_other"
+          ],
+          cap: 5
+        },
+        // ... (Insert all your other group definitions)
+        // e.g. "capital", "purchasing", "disposal", etc.
+      };
+
+      /* ========== 2) generatePDF(): create PDF from form data ========== */
+      function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        let yOffset = 10;
+        doc.setFontSize(16);
+        doc.text("IPRA Environmental Report Card", 10, yOffset);
+        yOffset += 10;
+
+        const form = document.getElementById("reportForm");
+        const formData = new FormData(form);
+
+        let content = "";
+        for (let [key, value] of formData.entries()) {
+          content += `${key}: ${value}n`;
+        }
+
+        const splitContent = doc.splitTextToSize(content, 180);
+        doc.setFontSize(12);
+        doc.text(splitContent, 10, yOffset);
+
+        doc.save("IPRA_Environmental_Report_Card.pdf");
+      }
+
+      /* ========== 3) updateTotal(): compute final score ========== */
+      function updateTotal() {
+        const form = document.getElementById("reportForm");
+        const formData = new FormData(form);
+
+        let uncappedTotal = 0;
+        // Initialize sums for each group
+        const groupSums = {};
+        for (const groupKey in cappedGroups) {
+          groupSums[groupKey] = 0;
+        }
+
+        // Loop over all selected form inputs
+        for (let [name, value] of formData.entries()) {
+          const numericVal = parseInt(value) || 0;
+
+          // Check if this "name" belongs to one of our capped groups
+          let foundGroup = null;
+          for (const groupKey in cappedGroups) {
+            const groupInfo = cappedGroups[groupKey];
+            if (groupInfo.names.includes(name)) {
+              foundGroup = groupKey;
+              break;
+            }
+          }
+
+          // If found in a group, add to that group's sum
+          if (foundGroup) {
+            groupSums[foundGroup] += numericVal;
+          } else {
+            // Not in a capped group => add to uncappedTotal
+            uncappedTotal += numericVal;
+          }
+        }
+
+        // Apply the caps for each group
+        let cappedTotal = 0;
+        for (const groupKey in cappedGroups) {
+          const groupInfo = cappedGroups[groupKey];
+          const rawSum = groupSums[groupKey];
+          const cap = groupInfo.cap;
+          cappedTotal += Math.min(rawSum, cap);
+        }
+
+        // Final total = uncappedTotal + sum of each group's capped result
+        const finalTotal = uncappedTotal + cappedTotal;
+
+        // Display
+        document.getElementById("totalPoints").innerText = finalTotal;
+      }
+
+      /* ========== 4) toggleSection(): collapsible sections ========== */
+      function toggleSection(titleElemId, sectionId) {
+        const titleElem = document.getElementById(titleElemId);
+        const section = document.getElementById(sectionId);
+        if (!section || !titleElem) return;
+
+        section.classList.toggle("hidden");
+        titleElem.classList.toggle("collapsed"); // rotates arrow
+      }
+
+      /* ========== 5) toggleSubQuestions(): show/hide sub-questions ========== */
+      function toggleSubQuestions(value, subQuestionId) {
+        const subQuestions = document.getElementById(subQuestionId);
+        if (!subQuestions) return;
+
+        if (value === "1") {
+          subQuestions.classList.remove("hidden");
+        } else {
+          subQuestions.classList.add("hidden");
+        }
+        // after toggling, recalc total
+        updateTotal();
+      }
+ 
+</script>
+
+    </script>
+</head>
+<body>
+    
+<div class="container">
+    <h1 class="main-title">IPRA Environmental Report Card</h1>
+<!-- ========== The main form ========== -->
+    <form id="reportForm">
+<!-- Inline Fields Container -->
+<div class="inline-fields">
+    <div class="field">
+        <label for="participant_name">Name:</label>
+        <input type="text" id="participant_name" name="participant_name" placeholder="Your Name" required>
+    </div>
+    <div class="field">
+        <label for="participant_org">Organization:</label>
+        <input type="text" id="participant_org" name="participant_org" placeholder="Your Organization" required>
+    </div>
+    <div class="field">
+        <label for="participant_email">Email:</label>
+        <input type="email" id="participant_email" name="participant_email" placeholder="Your Email" required>
+    </div>
+</div>
+
+        <!-- ========== GENERAL SECTION (Q1–4) ========== -->
+        <div id="generalTitle" class="section-title general" 
+             onclick="toggleSection('generalTitle','generalSection')">
+            General
+        </div>
+        <p><strong>General Section Score:</strong> <span id="generalPoints">0/6</span></p>
+
+        <div id="generalSection" class="section-content">
+            <!-- Q1 -->
+            <div class="question">
+                <label>1. Does your agency have an environmental policy?</label>
+                <input type="radio" name="policy" value="0" onclick="toggleSubQuestions('1','policySubQuestions'); updateTotal()"> Yes
+                <input type="radio" name="policy" value="0" onclick="toggleSubQuestions('0','policySubQuestions'); updateTotal()"> No
+            </div>
+            <div id="policySubQuestions" class="hidden">
+                <div class="sub-question">
+                    <label>1a. Is this policy/plan approved by the board? (1 point)</label>
+                    <input type="radio" name="policy_board" value="1" onclick="updateTotal()"> Yes
+                    <input type="radio" name="policy_board" value="0" onclick="updateTotal()"> No
+                </div>
+                <div class="sub-question">
+                    <label>1b. Does your agency actively update and review the policy? (1 point)</label>
+                    <input type="radio" name="policy_review" value="1" onclick="updateTotal()"> Yes
+                    <input type="radio" name="policy_review" value="0" onclick="updateTotal()"> No
+                </div>
+            </div>
+
+            <!-- Q2 -->
+            <div class="question">
+                <label>2. Do full-time and/or part-time staff members receive an orientation and/or training regarding your agency’s environmental policy/plan? (1 point)</label>
+                <input type="radio" name="staff_training" value="1" onclick="updateTotal()"> Yes
+                <input type="radio" name="staff_training" value="0" onclick="updateTotal()"> No
+            </div>
+
+            <!-- Q3 -->
+            <div class="question">
+                <label>3. Has your agency established a staff-led Environmental Committee or ‘Green Team’? (1 point)</label>
+                <input type="radio" name="green_team" value="1" onclick="toggleSubQuestions('1','greenTeamSubQuestions'); updateTotal()"> Yes
+                <input type="radio" name="green_team" value="0" onclick="toggleSubQuestions('0','greenTeamSubQuestions'); updateTotal()"> No
+            </div>
+            <div id="greenTeamSubQuestions" class="hidden">
+                <div class="sub-question">
+                    <label>3a. Does your Environmental Committee or ‘Green Team’ review and update board-approved policies...? (1 point)</label>
+                    <input type="radio" name="green_team_review" value="1" onclick="updateTotal()"> Yes
+                    <input type="radio" name="green_team_review" value="0" onclick="updateTotal()"> No
+                </div>
+            </div>
+
+            <!-- Q4 -->
+            <div class="question">
+                <label>4. Does your agency make (or has your agency made) use of IPRA’s Model Environmental Policy and/or Environmental Toolkit? (1 point)</label>
+                <input type="radio" name="ipra_toolkit" value="1" onclick="updateTotal()"> Yes
+                <input type="radio" name="ipra_toolkit" value="0" onclick="updateTotal()"> No
+            </div>
+        </div>
+
+        <!-- ========== ADMIN-FINANCE SECTION (Q5–13) ========== -->
+        <div id="adminFinanceTitle" class="section-title admin-finance" 
+             onclick="toggleSection('adminFinanceTitle','adminFinanceSection')">
+            Administration & Finance
+        </div>
+        <p><strong>Administration & Finance Score:</strong> <span id="adminFinancePoints">0/13</span></p>
+
+        <div id="adminFinanceSection" class="section-content">
+            <!-- Q5 (max 5) => using funding_other now -->
+            <div class="question">
+                <label>5. Does your agency dedicate funds in its annual operations budget to support environmental goals? (max 5 points)</label>
+                <input type="checkbox" name="funding_recycling" value="1" onclick="updateTotal()"> Recycling<br>
+                <input type="checkbox" name="funding_energy_audits" value="1" onclick="updateTotal()"> Energy Audits<br>
+                <input type="checkbox" name="funding_natural_maintenance" value="1" onclick="updateTotal()"> Natural Areas Maintenance<br>
+                <input type="checkbox" name="funding_natural_restoration" value="1" onclick="updateTotal()"> Natural Areas Restoration/Re-creation<br>
+                <input type="checkbox" name="funding_native_landscaping" value="1" onclick="updateTotal()"> Native Landscaping<br>
+                <input type="checkbox" name="funding_stormwater" value="1" onclick="updateTotal()"> Storm Water Best Management Practices<br>
+                <input type="checkbox" name="funding_purchasing" value="1" onclick="updateTotal()"> Environmentally Friendly Purchasing<br>
+                <input type="checkbox" name="funding_alternative_fuel" value="1" onclick="updateTotal()"> Alternative Fuel & Hybrid Vehicles<br>
+                <input type="checkbox" name="funding_energy_conservation" value="1" onclick="updateTotal()"> Energy Conservation<br>
+                <!-- changed from capital_other to funding_other -->
+                <input type="checkbox" name="funding_other" value="1" onclick="updateTotal()"> Other:
+                <input type="text" name="funding_other_text" placeholder="Please list" style="margin-left: 10px;">
+            </div>
+
+            <!-- Q6 (max 5) => still uses capital_other -->
+            <div class="question">
+                <label>6. In the last 5 years, has your agency dedicated capital funding towards environmental initiatives...? (max 5 points)</label>
+                <input type="checkbox" name="capital_natural_restoration" value="1" onclick="updateTotal()"> Natural Area Restoration<br>
+                <input type="checkbox" name="capital_public_access" value="1" onclick="updateTotal()"> Natural Area Public Access<br>
+                <input type="checkbox" name="capital_nature_facilities" value="1" onclick="updateTotal()"> Nature Program Facilities<br>
+                <input type="checkbox" name="capital_energy_conservation" value="1" onclick="updateTotal()"> Energy Conservation<br>
+                <input type="checkbox" name="capital_permeable_pavement" value="1" onclick="updateTotal()"> Permeable Pavement<br>
+                <input type="checkbox" name="capital_rain_gardens" value="1" onclick="updateTotal()"> Rain Gardens<br>
+                <input type="checkbox" name="capital_bio_swales" value="1" onclick="updateTotal()"> Bio-Swales<br>
+                <input type="checkbox" name="capital_alt_energy" value="1" onclick="updateTotal()"> Alternative Energy Systems<br>
+                <input type="checkbox" name="capital_other" value="1" onclick="updateTotal()"> Other:
+                <input type="text" name="capital_other_text" placeholder="Please list" style="margin-left: 10px;">
+            </div>
+
+            <div class="question">
+                <label>7. In the past 5 years, has your agency applied for grants to fund environmental goals/initiatives... (1 point)</label>
+                <input type="radio" name="grants_applied" value="1" onclick="updateTotal()"> Yes<br>
+                <input type="radio" name="grants_applied" value="0" onclick="updateTotal()"> No<br>
+                <input type="radio" name="grants_applied" value="0" onclick="updateTotal()"> N/A<br>
+            </div>
+
+            <div class="question">
+                <label>8. Does your agency use a set of guidelines... (1 point)</label>
+                <input type="radio" name="purchasing_guidelines" value="1" onclick="updateTotal()"> Yes<br>
+                <input type="radio" name="purchasing_guidelines" value="0" onclick="updateTotal()"> No<br>
+                <input type="radio" name="purchasing_guidelines" value="0" onclick="updateTotal()"> N/A<br>
+            </div>
+
+            <!-- Q9 (max 5) -->
+            <div class="question">
+                <label>9. Does your agency make conscious efforts within all departments...? (max 5 points)</label>
+                <input type="checkbox" name="purchasing_minimal_packaging" value="1" onclick="updateTotal()"> Minimal Packaging<br>
+                <input type="checkbox" name="purchasing_recycled_content" value="1" onclick="updateTotal()"> Recycled/Recyclable Content<br>
+                <input type="checkbox" name="purchasing_renewable_resources" value="1" onclick="updateTotal()"> Renewable Resource Content<br>
+                <input type="checkbox" name="purchasing_post_consumer" value="1" onclick="updateTotal()"> Min 30% Post Consumer Materials<br>
+                <input type="checkbox" name="purchasing_energy_star" value="1" onclick="updateTotal()"> Energy Star Rated Appliances<br>
+                <input type="checkbox" name="purchasing_low_voc" value="1" onclick="updateTotal()"> Low VOC Furnishings & Paints<br>
+                <input type="checkbox" name="purchasing_low_toxic_cleaning" value="1" onclick="updateTotal()"> Low Toxicity Cleaning Products<br>
+                <input type="checkbox" name="purchasing_local" value="1" onclick="updateTotal()"> Locally Produced Materials/Products<br>
+                <input type="checkbox" name="purchasing_other" value="1" onclick="updateTotal()"> Other:
+                <input type="text" name="purchasing_other_text" placeholder="Please list" style="margin-left: 10px;">
+            </div>
+
+            <div class="question">
+                <label>10. Does your agency seek to identify and purchase from vendors of environmentally friendly products through the US Communities or similar program? (2 points)</label>
+                <input type="radio" name="vendor_env_friendly" value="2" onclick="updateTotal()"> Yes<br>
+                <input type="radio" name="vendor_env_friendly" value="0" onclick="updateTotal()"> No<br>
+                <input type="radio" name="vendor_env_friendly" value="0" onclick="updateTotal()"> N/A<br>
+            </div>
+
+            <div class="question">
+                <label>11. When seeking proposals for professional services, does your agency request environmental references/qualifications...? (1 point)</label>
+                <input type="radio" name="rfp_environmental" value="1" onclick="toggleSubQuestions('1','rfpSubQuestions'); updateTotal()"> Yes<br>
+                <input type="radio" name="rfp_environmental" value="0" onclick="toggleSubQuestions('0','rfpSubQuestions'); updateTotal()"> No<br>
+                <input type="radio" name="rfp_environmental" value="0" onclick="toggleSubQuestions('0','rfpSubQuestions'); updateTotal()"> N/A<br>
+            </div>
+            <div id="rfpSubQuestions" class="hidden">
+                <div class="sub-question">
+                    <label>11a. Does your agency ask bidders to provide a Statement of Sustainability...? (1 point)</label>
+                    <input type="radio" name="rfp_sustainability" value="1" onclick="updateTotal()"> Yes<br>
+                    <input type="radio" name="rfp_sustainability" value="0" onclick="updateTotal()"> No<br>
+                </div>
+            </div>
+
+            <div class="question">
+                <label>12. Are procedures in place to measure the impacts of environmental goals/initiatives? (1 point)</label>
+                <input type="radio" name="env_impact_measures" value="1" onclick="updateTotal()"> Yes<br>
+                <input type="radio" name="env_impact_measures" value="0" onclick="updateTotal()"> No<br>
+                <input type="radio" name="env_impact_measures" value="0" onclick="updateTotal()"> N/A<br>
+            </div>
+
+            <div class="question">
+                <label>13. Does your agency promote public awareness of its sustainability efforts?</label>
+                <input type="radio" name="env_impact_measures_13" value="1" onclick="updateTotal()"> Yes<br>
+                <input type="radio" name="env_impact_measures_13" value="0" onclick="updateTotal()"> No<br>
+                <input type="radio" name="env_impact_measures_13" value="0" onclick="updateTotal()"> N/A<br>
+            </div>
+        </div>
+
+       <!-- ========== FACILITY MANAGEMENT (Q14–38) ========== -->
+<div id="facilityManagementTitle" class="section-title facility-management"
+onclick="toggleSection('facilityManagementTitle','facilityManagementSection')">
+Facility Management & Maintenance
+</div>
+<p><strong>Facility Management Score:</strong> <span id="facilityManagementPoints">0/25</span></p>
+
+<div id="facilityManagementSection" class="section-content">
+<!-- Q14–38 code below -->
+<!-- Q14 -->
+<div class="question">
+   <label>14. Does your agency provide opportunities for staff to recycle waste products in office areas...?</label>
+   <input type="radio" name="policy_staff" value="1" onclick="toggleSubQuestions('1','policySubQuestions_14'); updateTotal()"> Yes
+   <input type="radio" name="policy_staff" value="0" onclick="toggleSubQuestions('0','policySubQuestions_14'); updateTotal()"> No
+</div>
+<div id="policySubQuestions_14" class="hidden">
+   <div class="sub-question">
+       <label>14a. Are staff encouraged to recycle via policies, training, memoranda, and notices? (1 point)</label>
+       <input type="radio" name="policy_board_staff" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="policy_board_staff" value="0" onclick="updateTotal()"> No
+   </div>
+</div>
+
+<!-- Q15 -->
+<div class="question">
+   <label>15. Does your agency provide opportunities for patrons to recycle waste products in public areas...?</label>
+   <input type="radio" name="policy_patrons" value="1" onclick="toggleSubQuestions('1','policySubQuestions_15'); updateTotal()"> Yes
+   <input type="radio" name="policy_patrons" value="0" onclick="toggleSubQuestions('0','policySubQuestions_15'); updateTotal()"> No
+</div>
+<div id="policySubQuestions_15" class="hidden">
+   <div class="sub-question">
+       <label>15a. Are patrons encouraged to recycle via education, policies, promotion, and signage? (1 point)</label>
+       <input type="radio" name="policy_board_patrons" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="policy_board_patrons" value="0" onclick="updateTotal()"> No
+   </div>
+</div>
+
+<div class="question">
+   <label>16. Are recycling containers paired with waste containers, visibly well marked and easy to locate?</label>
+   <input type="radio" name="recycling_containers" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="recycling_containers" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>17. Are outside concessionaires required to minimize the use of disposable products? (2 points)</label>
+   <input type="radio" name="disposable_products" value="2" onclick="toggleSubQuestions('1','disposableSubQuestions_17'); updateTotal()"> Yes
+   <input type="radio" name="disposable_products" value="0" onclick="toggleSubQuestions('0','disposableSubQuestions_17'); updateTotal()"> No
+</div>
+<div id="disposableSubQuestions_17" class="hidden">
+   <div class="sub-question">
+       <label>17a. Are outside concessionaires required to offer recycling for patrons?</label>
+       <input type="radio" name="outside_recycling" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="outside_recycling" value="0" onclick="updateTotal()"> No
+   </div>
+</div>
+
+<div class="question">
+   <label>18. Does your agency encourage the use of electronic communication to conserve paper?</label>
+   <input type="radio" name="electronic_communication" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="electronic_communication" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>19. Is staff encouraged to use duplexing or double-sided copying of documents?</label>
+   <input type="radio" name="double_sided" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="double_sided" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>20. When contracting printing vendors or purchasing from vendors, does your agency specify...?</label>
+   <input type="radio" name="policy_printing" value="1" onclick="toggleSubQuestions('1','printingQuestions_20'); updateTotal()"> Yes
+   <input type="radio" name="policy_printing" value="0" onclick="toggleSubQuestions('0','printingQuestions_20'); updateTotal()"> No
+</div>
+<div id="printingQuestions_20" class="hidden">
+   <div class="sub-question">
+       <label>20a. Paper for printing needs that is free of chlorine-bleaching...?</label>
+       <input type="radio" name="policy_board_printing" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="policy_board_printing" value="0" onclick="updateTotal()"> No
+   </div>
+   <div class="sub-question">
+       <label>20b. Paper that contains 30% or more post consumer recycled content?</label>
+       <input type="radio" name="policy_recycled_printing" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="policy_recycled_printing" value="0" onclick="updateTotal()"> No
+   </div>
+   <div class="sub-question">
+       <label>20c. Does your agency actively update and review the policy? (1 point)</label>
+       <input type="radio" name="policy_review_printing" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="policy_review_printing" value="0" onclick="updateTotal()"> No
+       <input type="checkbox" name="printing_other" value="1" onclick="updateTotal()"> Other:
+       <input type="text" name="printing_other_text" placeholder="Please list" style="margin-left: 10px;">
+   </div>
+</div>
+
+<div class="question">
+   <label>21. Do restrooms and locker rooms have water saving devices (low flow showers, toilets, motion faucets)?</label>
+   <input type="radio" name="water_saving_main" value="0" onclick="toggleSubQuestions('1','waterSavingSubQuestions_21'); updateTotal()"> Yes
+   <input type="radio" name="water_saving_main" value="0" onclick="toggleSubQuestions('0','waterSavingSubQuestions_21'); updateTotal()"> No
+</div>
+<div id="waterSavingSubQuestions_21" class="hidden">
+   <div class="sub-question">
+       <label>21a. Are at least 50% of fixtures low flow or motion activated?</label>
+       <input type="radio" name="water_saving_a" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="water_saving_a" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="water_saving_a" value="0" onclick="updateTotal()"> N/A
+   </div>
+   <div class="sub-question">
+       <label>21b. Are at least 75% of fixtures low flow or motion activated?</label>
+       <input type="radio" name="water_saving_b" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="water_saving_b" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="water_saving_b" value="0" onclick="updateTotal()"> N/A
+   </div>
+   <div class="sub-question">
+       <label>21c. Are 100% of fixtures low flow or motion activated?</label>
+       <input type="radio" name="water_saving_c" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="water_saving_c" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="water_saving_c" value="0" onclick="updateTotal()"> N/A
+   </div>
+</div>
+
+<div class="question">
+   <label>22. Do restrooms and locker rooms have hand dryers in lieu of paper towels?</label>
+   <input type="radio" name="hand_dryers_main" value="0" onclick="toggleSubQuestions('1','handDryersSubQuestions_22'); updateTotal()"> Yes
+   <input type="radio" name="hand_dryers_main" value="0" onclick="toggleSubQuestions('0','handDryersSubQuestions_22'); updateTotal()"> No
+</div>
+<div id="handDryersSubQuestions_22" class="hidden">
+   <div class="sub-question">
+       <label>22a. Do 100% of your restrooms/locker rooms have hand dryers?</label>
+       <input type="radio" name="hand_dryers_a" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="hand_dryers_a" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="hand_dryers_a" value="0" onclick="updateTotal()"> N/A
+   </div>
+</div>
+
+<div class="question">
+   <label>23. Does your agency conduct energy audits?</label>
+   <input type="radio" name="energy_audits_main" value="0" onclick="toggleSubQuestions('1','energyAuditsSubQuestions_23'); updateTotal()"> Yes
+   <input type="radio" name="energy_audits_main" value="0" onclick="toggleSubQuestions('0','energyAuditsSubQuestions_23'); updateTotal()"> No
+</div>
+<div id="energyAuditsSubQuestions_23" class="hidden">
+   <div class="sub-question">
+       <label>23a. Following audits, does your agency make changes?</label>
+       <input type="radio" name="energy_audits_a" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="energy_audits_a" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="energy_audits_a" value="0" onclick="updateTotal()"> N/A
+   </div>
+   <div class="sub-question">
+       <label>23b. After making changes, does your agency record differences in impact?</label>
+       <input type="radio" name="energy_audits_b" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="energy_audits_b" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="energy_audits_b" value="0" onclick="updateTotal()"> N/A
+   </div>
+</div>
+
+<div class="question">
+   <label>24. Is energy-efficient lighting used (compact fluorescents, T-8 fluorescents or LEDs)?</label>
+   <input type="radio" name="lighting_main" value="0" onclick="toggleSubQuestions('1','lightingSubQuestions_24'); updateTotal()"> Yes
+   <input type="radio" name="lighting_main" value="0" onclick="toggleSubQuestions('0','lightingSubQuestions_24'); updateTotal()"> No
+</div>
+<div id="lightingSubQuestions_24" class="hidden">
+   <div class="sub-question">
+       <label>24a. Are 100% of new or replacement lighting needs energy-efficient?</label>
+       <input type="radio" name="lighting_a" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="lighting_a" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="lighting_a" value="0" onclick="updateTotal()"> N/A
+   </div>
+</div>
+
+<div class="question">
+   <label>25. Are lights, fans or other electric devices on motion-activated occupancy sensors or timers?</label>
+   <input type="radio" name="motion_activated" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="motion_activated" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>26. Are staff instructed to turn off all electronics and unplug charging devices at the end of the day?</label>
+   <input type="radio" name="unplug_devices" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="unplug_devices" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>27. Is energy efficiency included as a specification when purchasing/replacing major appliances...?</label>
+   <input type="radio" name="energy_efficiency" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="energy_efficiency" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>28. Are hot water heaters and hot water pipes insulated?</label>
+   <input type="radio" name="pipe_insulation" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="pipe_insulation" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>29. Are on-demand/tankless hot water heaters utilized where appropriate?</label>
+   <input type="radio" name="on_demand" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="on_demand" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>30. Do facility HVAC systems include energy-saving features such as min./max. settings...?</label>
+   <input type="radio" name="hvac_main" value="0" onclick="toggleSubQuestions('1','hvacSubQuestions_30'); updateTotal()"> Yes
+   <input type="radio" name="hvac_main" value="0" onclick="toggleSubQuestions('0','hvacSubQuestions_30'); updateTotal()"> No
+</div>
+<div id="hvacSubQuestions_30" class="hidden">
+   <div class="sub-question">
+       <label>30a. Are particulate filters (with MERV8 rating or better) used in HVAC systems?</label>
+       <input type="radio" name="hvac_a" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="hvac_a" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="hvac_a" value="0" onclick="updateTotal()"> N/A
+   </div>
+</div>
+
+<div class="question">
+   <label>31. Does your agency promote the use of environmentally-friendly, low toxicity and/or fragrance-free cleaning products...? (2 points)</label>
+   <input type="radio" name="cleaning_products" value="2" onclick="updateTotal()"> Yes
+   <input type="radio" name="cleaning_products" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>31. Does your agency seek to minimize the use of petroleum-based cleaners, solvents and inks?</label>
+   <input type="radio" name="petroleum_based" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="petroleum_based" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>32. To improve and protect indoor air quality does your agency seek to purchase low VOCs...?</label>
+   <input type="radio" name="air_quality_main" value="1" onclick="toggleSubQuestions('1','airQualitySubQuestions_32'); updateTotal()"> Yes
+   <input type="radio" name="air_quality_main" value="0" onclick="toggleSubQuestions('0','airQualitySubQuestions_32'); updateTotal()"> No
+</div>
+<div id="airQualitySubQuestions_32" class="hidden">
+   <div class="sub-question">
+       <label>32a. Does your agency seek to purchase carpets that meet Carpet and Rug Institute Green Label...?</label>
+       <input type="radio" name="air_quality_a" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="air_quality_a" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="air_quality_a" value="0" onclick="updateTotal()"> N/A
+   </div>
+</div>
+
+<div class="question">
+   <label>33. Does your agency consider the use of sustainable, reclaimed and/or local materials when remodeling/renovating facilities?</label>
+   <input type="radio" name="sustainable_materials_main" value="1" onclick="toggleSubQuestions('1','sustainableMaterialsSubQuestions_33'); updateTotal()"> Yes
+   <input type="radio" name="sustainable_materials_main" value="0" onclick="toggleSubQuestions('0','sustainableMaterialsSubQuestions_33'); updateTotal()"> No
+</div>
+<div id="sustainableMaterialsSubQuestions_33" class="hidden">
+   <div class="sub-question">
+       <label>33a. Are building materials removed during remodeling/renovation reclaimed or recycled?</label>
+       <input type="radio" name="sustainable_materials_a" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="sustainable_materials_a" value="0" onclick="updateTotal()"> No
+       <input type="radio" name="sustainable_materials_a" value="0" onclick="updateTotal()"> N/A
+   </div>
+</div>
+
+<!-- Q34 (max 5) -->
+<div class="question">
+   <label>34. Does your agency properly dispose of/recycle any of the following per MSDS...? (max 5 points)</label>
+   <input type="checkbox" name="disposal_energy_lighting" value="1" onclick="updateTotal()"> Energy Efficient Lighting<br>
+   <input type="checkbox" name="disposal_batteries" value="1" onclick="updateTotal()"> Batteries<br>
+   <input type="checkbox" name="disposal_electronics" value="1" onclick="updateTotal()"> Electronics<br>
+   <input type="checkbox" name="disposal_ink_toner" value="1" onclick="updateTotal()"> Ink and Toner Cartridges<br>
+   <input type="checkbox" name="disposal_paints" value="1" onclick="updateTotal()"> Paints<br>
+   <input type="checkbox" name="disposal_cleaning_products" value="1" onclick="updateTotal()"> Cleaning Products<br>
+   <input type="checkbox" name="disposal_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="disposal_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<div class="question">
+   <label>35. Does your agency have an integrated pest management program in place to reduce the use of toxic pesticides...? (2 points)</label>
+   <input type="radio" name="pest_management" value="2" onclick="updateTotal()"> Yes
+   <input type="radio" name="pest_management" value="0" onclick="updateTotal()"> No
+</div>
+
+<!-- Q36 (max 5) -->
+<div class="question">
+   <label>36. Does your agency make use of alternative energy systems to provide energy and/or conserve energy...? (max 5 points)</label>
+   <input type="checkbox" name="alternative_energy_passive" value="1" onclick="updateTotal()"> Passive Solar<br>
+   <input type="checkbox" name="alternative_energy_active" value="1" onclick="updateTotal()"> Active Solar<br>
+   <input type="checkbox" name="alternative_energy_wind" value="1" onclick="updateTotal()"> Wind Energy<br>
+   <input type="checkbox" name="alternative_energy_geothermal" value="1" onclick="updateTotal()"> Geo-Thermal<br>
+   <input type="checkbox" name="alternative_energy_green_roof" value="1" onclick="updateTotal()"> Green Roof
+</div>
+
+<div class="question">
+   <label>37. Does your agency actively train and/or support staff training in sustainable management practices (green cleaning, energy efficiency, etc)?</label>
+   <input type="radio" name="sustainable_training" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="sustainable_training" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>38. Does your agency purchase energy through a green energy provider?</label>
+   <input type="radio" name="green_provider" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="green_provider" value="0" onclick="updateTotal()"> No
+</div>
+</div>
+
+        <!-- ========== FLEET MANAGEMENT (Q39–46) ========== -->
+<!-- ========== FLEET MANAGEMENT (Q39–46) ========== -->
+<div id="fleetManagementTitle" class="section-title fleet-management"
+     onclick="toggleSection('fleetManagementTitle','fleetManagementSection')">
+    Fleet Management & Maintenance
+</div>
+<p><strong>Fleet Management Score:</strong> <span id="fleetManagementPoints">0/10</span></p>
+
+<div id="fleetManagementSection" class="section-content">
+    <div class="question">
+        <label>39. Does your agency perform regular engine tune-ups and scheduled preventative maintenance...?</label>
+        <input type="radio" name="regular_tune" value="1" onclick="updateTotal()"> Yes
+        <input type="radio" name="regular_tune" value="0" onclick="updateTotal()"> No
+    </div>
+
+    <div class="question">
+        <label>40. If you perform regular maintenance, does your agency recycle and/or properly dispose of all vehicle fluids and engine parts?</label>
+        <input type="radio" name="recycle_fluid" value="1" onclick="updateTotal()"> Yes
+        <input type="radio" name="recycle_fluid" value="0" onclick="updateTotal()"> No
+    </div>
+
+    <div class="question">
+        <label>41. Does your agency properly use, store and dispose of hazardous materials according to MSDS...?</label>
+        <input type="radio" name="hazardous_storage" value="1" onclick="updateTotal()"> Yes
+        <input type="radio" name="hazardous_storage" value="0" onclick="updateTotal()"> No
+    </div>
+
+    <div class="question">
+        <label>42. Does your agency have a safety policy and training procedures in place regarding the handling of hazardous waste?</label>
+        <input type="radio" name="wastesafety_policy" value="1" onclick="updateTotal()"> Yes
+        <input type="radio" name="wastesafety_policy" value="0" onclick="updateTotal()"> No
+    </div>
+
+    <div class="question">
+        <label>42. Does your agency provide the appropriate work environment with ventilation/safety gear for employees...?</label>
+        <input type="radio" name="appropriate_work" value="1" onclick="updateTotal()"> Yes
+        <input type="radio" name="appropriate_work" value="0" onclick="updateTotal()"> No
+    </div>
+
+    <div class="question">
+        <label>43. Does your agency have a program to conserve fuel and energy with respect to fleet operations (e.g. mileage/fuel efficiency tracking, no idling policy)?</label>
+        <input type="radio" name="conserve_fuel" value="1" onclick="updateTotal()"> Yes
+        <input type="radio" name="conserve_fuel" value="0" onclick="updateTotal()"> No
+    </div>
+
+    <div class="question">
+        <label>44. Does your agency actively fund or apply for grants that promote and provide the means for the use of clean energy (bio-diesel, LPG, etc.)? (2 points)</label>
+        <input type="radio" name="apply_grants" value="2" onclick="updateTotal()"> Yes
+        <input type="radio" name="apply_grants" value="0" onclick="updateTotal()"> No
+    </div>
+
+    <div class="question">
+        <label>45. As part of your Equipment Asset Program, what percentage of your total fleet has been replaced with alternative fuel and/or hybrid vehicles?</label>
+        <input type="radio" name="fleet_replacement" value="0" onclick="updateTotal()"> 0% - 0 points<br>
+        <input type="radio" name="fleet_replacement" value="1" onclick="updateTotal()"> 1-10% - 1 point<br>
+        <input type="radio" name="fleet_replacement" value="2" onclick="updateTotal()"> 11-20% - 2 points<br>
+        <input type="radio" name="fleet_replacement" value="3" onclick="updateTotal()"> 21-30% - 3 points<br>
+        <input type="radio" name="fleet_replacement" value="4" onclick="updateTotal()"> 30-50% - 4 points<br>
+        <input type="radio" name="fleet_replacement" value="5" onclick="updateTotal()"> &gt;50% - 5 points
+    </div>
+
+    <div class="question">
+        <label>46. Does your agency limit the use and refueling of, or not use at all, gas powered equipment and vehicles during ozone action days...?</label>
+        <input type="radio" name="limit_refueling" value="1" onclick="updateTotal()"> Yes
+        <input type="radio" name="limit_refueling" value="0" onclick="updateTotal()"> No
+    </div>
+</div>
+
+
+      <!-- ========== PARKS & NATURAL RESOURCE (Q47–60) ========== -->
+<div id="parksNaturalTitle" class="section-title parks-natural"
+onclick="toggleSection('parksNaturalTitle','parksNaturalSection')">
+Parks & Natural Resource Management
+</div>
+<p><strong>Parks & Natural Resource Management Score:</strong> <span id="parksNaturalPoints">0/14</span></p>
+
+<div id="parksNaturalSection" class="section-content">
+<div class="question">
+   <label>47. Does your agency have natural resource management plans in place for District natural areas?</label>
+   <input type="radio" name="resource_management" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="resource_management" value="0" onclick="updateTotal()"> No
+</div>
+
+<!-- Q48 (max 5) -->
+<div class="question">
+   <label>48. Does your agency dedicate funds in its annual operations budget for natural resource best management practices? (max 5 points)</label>
+   <input type="checkbox" name="nrbmp_restoration" value="1" onclick="updateTotal()"> Restoration of Natural Areas<br>
+   <input type="checkbox" name="nrbmp_recreation" value="1" onclick="updateTotal()"> Re-creation of Natural Areas<br>
+   <input type="checkbox" name="nrbmp_exotics" value="1" onclick="updateTotal()"> Control Exotic Species<br>
+   <input type="checkbox" name="nrbmp_biodiversity" value="1" onclick="updateTotal()"> Increase Biodiversity/Wildlife Habitat<br>
+   <input type="checkbox" name="nrbmp_stormwater" value="1" onclick="updateTotal()"> Storm water Best Management Practices...<br>
+   <input type="checkbox" name="nrbmp_water_quality" value="1" onclick="updateTotal()"> Improve Water Quality<br>
+   <input type="checkbox" name="nrbmp_bank_stabilization" value="1" onclick="updateTotal()"> Bank Stabilization<br>
+   <input type="checkbox" name="nrbmp_erosion_control" value="1" onclick="updateTotal()"> Sediment & Erosion Control<br>
+   <input type="checkbox" name="nrbmp_ipm" value="1" onclick="updateTotal()"> Integrated Pest Management Program...<br>
+   <input type="checkbox" name="nrbmp_alternative_ipm" value="1" onclick="updateTotal()"> Alternative/Biological Pest Control...<br>
+   <input type="checkbox" name="nrbmp_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="nrbmp_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q49 (max 5) -->
+<div class="question">
+   <label>49. Does your agency actively apply for grants to fund natural resource best management practices? (max 5 points)</label>
+   <input type="checkbox" name="grants_restoration" value="1" onclick="updateTotal()"> Restoration of Natural Areas<br>
+   <input type="checkbox" name="grants_recreation" value="1" onclick="updateTotal()"> Re-creation of Natural Areas<br>
+   <input type="checkbox" name="grants_exotics" value="1" onclick="updateTotal()"> Control Exotic Species<br>
+   <input type="checkbox" name="grants_biodiversity" value="1" onclick="updateTotal()"> Increase Biodiversity/Wildlife Habitat<br>
+   <input type="checkbox" name="grants_stormwater" value="1" onclick="updateTotal()"> Storm water Best Management Practices...<br>
+   <input type="checkbox" name="grants_water_quality" value="1" onclick="updateTotal()"> Improve Water Quality<br>
+   <input type="checkbox" name="grants_bank_stabilization" value="1" onclick="updateTotal()"> Bank Stabilization<br>
+   <input type="checkbox" name="grants_erosion_control" value="1" onclick="updateTotal()"> Sediment & Erosion Control<br>
+   <input type="checkbox" name="grants_ipm" value="1" onclick="updateTotal()"> Integrated Pest Management Program...<br>
+   <input type="checkbox" name="grants_alternative_ipm" value="1" onclick="updateTotal()"> Alternative/Biological Pest Control...<br>
+   <input type="checkbox" name="grants_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="grants_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<div class="question">
+   <label>50. Does your agency take precautions or protective measures during and after construction/development to protect soils in existing landscapes?</label>
+   <input type="radio" name="soils_protection" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="soils_protection" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>51. Does your agency use low environmental impact snow melt products (i.e. beet juice, calcium magnesium acetate)?</label>
+   <input type="radio" name="snow_melt_products" value="0" onclick="toggleSubQuestions('1','snowMeltSubQuestions_51'); updateTotal()"> Yes
+   <input type="radio" name="snow_melt_products" value="0" onclick="toggleSubQuestions('0','snowMeltSubQuestions_51'); updateTotal()"> No
+</div>
+<div id="snowMeltSubQuestions_51" class="hidden">
+   <div class="sub-question">
+       <label>51a. Please specify which products are used:</label>
+       <input type="text" name="snow_melt_products_details" placeholder="Enter details" onblur="updateTotal()">
+   </div>
+</div>
+
+<div class="question">
+   <label>52. Has your agency phased out the use of coal tar based asphalt sealants and started using less toxic eco-friendly alternatives?</label>
+   <input type="radio" name="coal_tar_phase_out" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="coal_tar_phase_out" value="0" onclick="updateTotal()"> No
+</div>
+
+<!-- Q53 (max 4) -->
+<div class="question">
+   <label>53. Does your agency try to reduce the use of fertilizers and pesticides in parks by: (max 4 points)?</label>
+   <input type="checkbox" name="reduce_fertilizers_native" value="1" onclick="updateTotal()"> Utilization of drought/disease resistant native plant species<br>
+   <input type="checkbox" name="reduce_fertilizers_mowing" value="1" onclick="updateTotal()"> Elimination of mowing in some areas<br>
+   <input type="checkbox" name="reduce_fertilizers_applications" value="1" onclick="updateTotal()"> Reduction of the number of applications...<br>
+   <input type="checkbox" name="reduce_fertilizers_ipm" value="1" onclick="updateTotal()"> Use of Integrated Pest Management (IPM)
+</div>
+
+<!-- Q54 (max 4) -->
+<div class="question">
+   <label>54. Does your agency try to reduce the use of fertilizers and pesticides in parks by: (max 4 points)?</label>
+   <input type="checkbox" name="reduce_fertilizers_native_54" value="1" onclick="updateTotal()"> Utilization of drought/disease resistant native plant species<br>
+   <input type="checkbox" name="reduce_fertilizers_mowing_54" value="1" onclick="updateTotal()"> Elimination of mowing in some areas<br>
+   <input type="checkbox" name="reduce_fertilizers_applications_54" value="1" onclick="updateTotal()"> Reduction of the number of applications...<br>
+   <input type="checkbox" name="reduce_fertilizers_ipm_54" value="1" onclick="updateTotal()"> Use of Integrated Pest Management (IPM)
+</div>
+
+<!-- Q55 (max 4) -->
+<div class="question">
+   <label>55. Is landscaping around facilities designed with energy conservation in mind? (max 4 points)</label>
+   <input type="checkbox" name="landscaping_windbreaks" value="1" onclick="updateTotal()"> Windbreaks/buffers<br>
+   <input type="checkbox" name="landscaping_shade_southern" value="1" onclick="updateTotal()"> Shade Trees Along Southern Exposures<br>
+   <input type="checkbox" name="landscaping_shade_paved" value="1" onclick="updateTotal()"> Shade Trees Around Paved Areas<br>
+   <input type="checkbox" name="landscaping_drought_tolerant" value="1" onclick="updateTotal()"> Drought Tolerant Native Plants
+</div>
+
+<!-- Q56 (max 5) -->
+<div class="question">
+   <label>56. Does your agency incorporate native plantings into the landscape at: (max 5 points)?</label>
+   <input type="checkbox" name="native_plantings_admin" value="1" onclick="updateTotal()"> Administrative Offices<br>
+   <input type="checkbox" name="native_plantings_recreational" value="1" onclick="updateTotal()"> Recreational Building Facilities<br>
+   <input type="checkbox" name="native_plantings_aquatic" value="1" onclick="updateTotal()"> Aquatic Facilities<br>
+   <input type="checkbox" name="native_plantings_maintenance" value="1" onclick="updateTotal()"> Maintenance Facilities<br>
+   <input type="checkbox" name="native_plantings_active" value="1" onclick="updateTotal()"> Active Use Park Landscapes<br>
+   <input type="checkbox" name="native_plantings_golf" value="1" onclick="updateTotal()"> Golf Courses
+</div>
+
+<div class="question">
+   <label>57. Does your agency post no idling signage in designated areas for frequently used drop off & pick up areas for program participants?</label>
+   <input type="radio" name="no_idling_signage" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="no_idling_signage" value="0" onclick="updateTotal()"> No
+</div>
+
+<!-- Q58 (max 3) -->
+<div class="question">
+   <label>58. Is your agency responsive to private landowner activities that impact your agency’s natural resource BMPs? (max 3 points)</label>
+   <input type="checkbox" name="nr_best_mgmt_encroachment" value="1" onclick="updateTotal()"> Encroachment<br>
+   <input type="checkbox" name="nr_best_mgmt_illegal_dumping" value="1" onclick="updateTotal()"> Illegal Dumping<br>
+   <input type="checkbox" name="nr_best_mgmt_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="nr_best_mgmt_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q59 (max 5) -->
+<div class="question">
+   <label>59. Does your agency properly dispose of any of the following per Material Safety Data Sheets (MSDS)...? (max 5 points)</label>
+   <input type="checkbox" name="dispose_fertilizers" value="1" onclick="updateTotal()"> Fertilizers<br>
+   <input type="checkbox" name="dispose_pesticides" value="1" onclick="updateTotal()"> Pesticides<br>
+   <input type="checkbox" name="dispose_excavated" value="1" onclick="updateTotal()"> Excavated material<br>
+   <input type="checkbox" name="dispose_construction" value="1" onclick="updateTotal()"> Construction material<br>
+   <input type="checkbox" name="dispose_other" value="1" onclick="updateTotal()"> Other hazardous materials:
+   <input type="text" name="dispose_other_text" placeholder="Please List" style="margin-left: 10px;">
+</div>
+
+<div class="question">
+   <label>60. Does your agency distribute/have available resources to explain natural resource best management practices?</label>
+   <input type="radio" name="nr_resources" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="nr_resources" value="0" onclick="updateTotal()"> No
+</div>
+</div>
+
+      <!-- ========== PLANNING & OPEN SPACE (Q61–69) ========== -->
+<div id="planningOpenSpaceTitle" class="section-title planning-open-space"
+onclick="toggleSection('planningOpenSpaceTitle','planningOpenSpaceSection')">
+Planning & Open Space Preservation
+</div>
+<p><strong>Planning & Open Space Score:</strong> <span id="planningOpenSpacePoints">0/15</span></p>
+
+<div id="planningOpenSpaceSection" class="section-content">
+<!-- Q61 (max 5) -->
+<div class="question">
+   <label>61. Does your agency seek to acquire any of the following types of natural resource areas? (max 5 points)</label>
+   <input type="checkbox" name="acquire_remnant" value="1" onclick="updateTotal()"> Remnant Prairies<br>
+   <input type="checkbox" name="acquire_wetlands" value="1" onclick="updateTotal()"> Wetlands<br>
+   <input type="checkbox" name="acquire_rivers" value="1" onclick="updateTotal()"> Rivers, Streams, Tributaries<br>
+   <input type="checkbox" name="acquire_ponds" value="1" onclick="updateTotal()"> Ponds/Lakes<br>
+   <input type="checkbox" name="acquire_floodplains" value="1" onclick="updateTotal()"> Floodplains<br>
+   <input type="checkbox" name="acquire_greenways" value="1" onclick="updateTotal()"> Greenways/Corridors<br>
+   <input type="checkbox" name="acquire_woodlands" value="1" onclick="updateTotal()"> Woodlands<br>
+   <input type="checkbox" name="acquire_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="acquire_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q62 (max 5) -->
+<div class="question">
+   <label>62. For the above natural resource areas checked, are they identified to be acquired for any of the following reasons? (max 5 points)</label>
+   <input type="checkbox" name="nr_acquire_reasons_habitats" value="1" onclick="updateTotal()"> Protect/Provide Habitats<br>
+   <input type="checkbox" name="nr_acquire_reasons_biodiversity" value="1" onclick="updateTotal()"> Increase Biodiversity<br>
+   <input type="checkbox" name="nr_acquire_reasons_water_quality" value="1" onclick="updateTotal()"> Improve Water Quality<br>
+   <input type="checkbox" name="nr_acquire_reasons_exotic" value="1" onclick="updateTotal()"> Control Exotic Species<br>
+   <input type="checkbox" name="nr_acquire_reasons_erosion" value="1" onclick="updateTotal()"> Erosion Control<br>
+   <input type="checkbox" name="nr_acquire_reasons_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="nr_acquire_reasons_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q63 (max 5) -->
+<div class="question">
+   <label>63. Does your agency include natural resource best management practices when developing plans for park property? (max 5 points)</label>
+   <input type="checkbox" name="nr_bmp_planning_restoration" value="1" onclick="updateTotal()"> Restoration of Natural Areas<br>
+   <input type="checkbox" name="nr_bmp_planning_recreation" value="1" onclick="updateTotal()"> Re-creation of Natural Areas<br>
+   <input type="checkbox" name="nr_bmp_planning_invasive" value="1" onclick="updateTotal()"> Control Invasive Species<br>
+   <input type="checkbox" name="nr_bmp_planning_biodiversity" value="1" onclick="updateTotal()"> Increase Biodiversity/Wildlife Habitat<br>
+   <input type="checkbox" name="nr_bmp_planning_native" value="1" onclick="updateTotal()"> Native Landscaping<br>
+   <input type="checkbox" name="nr_bmp_planning_stormwater" value="1" onclick="updateTotal()"> Storm water Best Management Practices<br>
+   <input type="checkbox" name="nr_bmp_planning_water" value="1" onclick="updateTotal()"> Improve Water Quality<br>
+   <input type="checkbox" name="nr_bmp_planning_burning" value="1" onclick="updateTotal()"> Proscribed Burning<br>
+   <input type="checkbox" name="nr_bmp_planning_bank" value="1" onclick="updateTotal()"> Bank Stabilization<br>
+   <input type="checkbox" name="nr_bmp_planning_erosion" value="1" onclick="updateTotal()"> Sediment & Erosion Control<br>
+   <input type="checkbox" name="nr_bmp_planning_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="nr_bmp_planning_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q64 (max 5) -->
+<div class="question">
+   <label>64. Does your agency actively apply for grants to fund natural resource best management practices and projects? (max 5 points)</label>
+   <input type="checkbox" name="grants_nr_restoration" value="1" onclick="updateTotal()"> Restoration of Natural Areas<br>
+   <input type="checkbox" name="grants_nr_recreation" value="1" onclick="updateTotal()"> Re-creation of Natural Areas<br>
+   <input type="checkbox" name="grants_nr_invasive" value="1" onclick="updateTotal()"> Control Invasive Species<br>
+   <input type="checkbox" name="grants_nr_biodiversity" value="1" onclick="updateTotal()"> Increase Biodiversity/Wildlife Habitat<br>
+   <input type="checkbox" name="grants_nr_native" value="1" onclick="updateTotal()"> Native Landscaping<br>
+   <input type="checkbox" name="grants_nr_stormwater" value="1" onclick="updateTotal()"> Storm water Best Management Practices<br>
+   <input type="checkbox" name="grants_nr_water" value="1" onclick="updateTotal()"> Improve Water Quality<br>
+   <input type="checkbox" name="grants_nr_burning" value="1" onclick="updateTotal()"> Proscribed Burning<br>
+   <input type="checkbox" name="grants_nr_bank" value="1" onclick="updateTotal()"> Bank Stabilization<br>
+   <input type="checkbox" name="grants_nr_erosion" value="1" onclick="updateTotal()"> Sediment & Erosion Control<br>
+   <input type="checkbox" name="grants_nr_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="grants_nr_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q65 (max 5) -->
+<div class="question">
+   <label>65. Does your agency provide access for the public to recreate in natural/preserved areas by means of (max 5 points)?</label>
+   <input type="checkbox" name="public_access_boardwalks" value="1" onclick="updateTotal()"> Boardwalks<br>
+   <input type="checkbox" name="public_access_trails" value="1" onclick="updateTotal()"> Trails<br>
+   <input type="checkbox" name="public_access_fishing_piars" value="1" onclick="updateTotal()"> Fishing Piers<br>
+   <input type="checkbox" name="public_access_viewing_platforms" value="1" onclick="updateTotal()"> Viewing Platforms<br>
+   <input type="checkbox" name="public_access_canoe_kayak" value="1" onclick="updateTotal()"> Canoe/kayak launches<br>
+   <input type="checkbox" name="public_access_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="public_access_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q66 (max 5) -->
+<div class="question">
+   <label>66. Does your agency increase public awareness of natural/preserved areas with: (max 5 points)?</label>
+   <input type="checkbox" name="awareness_interpretive" value="1" onclick="updateTotal()"> Interpretive Signs<br>
+   <input type="checkbox" name="awareness_brochures" value="1" onclick="updateTotal()"> Educational Brochures/Pamphlets<br>
+   <input type="checkbox" name="awareness_posters" value="1" onclick="updateTotal()"> Educational Posters<br>
+   <input type="checkbox" name="awareness_program_brochure" value="1" onclick="updateTotal()"> Agency Program Brochure<br>
+   <input type="checkbox" name="awareness_website" value="1" onclick="updateTotal()"> Website<br>
+   <input type="checkbox" name="awareness_events" value="1" onclick="updateTotal()"> Events/Programs<br>
+   <input type="checkbox" name="awareness_meetings" value="1" onclick="updateTotal()"> Public Meetings<br>
+   <input type="checkbox" name="awareness_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="awareness_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q67 (max 4) -->
+<div class="question">
+   <label>67. Does your agency create/maintain relationships with any of the following to ensure community-supported protection of open spaces...? (max 4 points)</label>
+   <input type="checkbox" name="open_spaces_agencies" value="1" onclick="updateTotal()"> Other Government Agencies<br>
+   <input type="checkbox" name="open_spaces_nonprofit" value="1" onclick="updateTotal()"> Not-for-Profit Organizations<br>
+   <input type="checkbox" name="open_spaces_private" value="1" onclick="updateTotal()"> Private Landowners<br>
+   <input type="checkbox" name="open_spaces_other" value="1" onclick="updateTotal()"> Other:
+   <input type="text" name="open_spaces_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<div class="question">
+   <label>68. Does your agency partner with organizations and/or local developers in order to provide information on living around natural resource areas or manmade detention/retention sites?</label>
+   <input type="radio" name="partner_info" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="partner_info" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>69. Does your agency partner with organizations and/or local developers in order to provide information on living around natural resource areas or manmade detention/retention sites?</label>
+   <input type="radio" name="partner_info_69" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="partner_info_69" value="0" onclick="updateTotal()"> No
+</div>
+</div>
+
+
+        <!-- ========== PROGRAMMING (Q70–80) ========== -->
+<div id="programmingTitle" class="section-title programming"
+onclick="toggleSection('programmingTitle','programmingSection')">
+Programming
+</div>
+<p><strong>Programming Score:</strong> <span id="programmingPoints">0/10</span></p>
+
+<div id="programmingSection" class="section-content">
+<div class="question">
+   <label>70. Does your agency own and operate a nature center?</label>
+   <input type="radio" name="nature_center" value="1" onclick="toggleSubQuestions('0','natureCenterSubQuestions_70'); updateTotal()"> Yes
+   <input type="radio" name="nature_center" value="0" onclick="toggleSubQuestions('1','natureCenterSubQuestions_70'); updateTotal()"> No
+</div>
+<div id="natureCenterSubQuestions_70" class="hidden">
+   <div class="sub-question">
+       <label>70a. If you answered NO, does your agency provide on-going nature education or nature interpretive programming?</label>
+       <input type="radio" name="nature_center_program" value="1" onclick="updateTotal()"> Yes
+       <input type="radio" name="nature_center_program" value="0" onclick="updateTotal()"> No
+   </div>
+</div>
+
+<div class="question">
+   <label>71. Does your agency own and operate a nature center?</label>
+   <input type="radio" name="nature_center_71" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="nature_center_71" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>72. Does your agency provide programs regarding sustainable living (native or organic gardening, composting, bee keeping)?</label>
+   <input type="radio" name="sustainable_living_programs" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="sustainable_living_programs" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>73. Does your agency proactively educate residents regarding wildlife issues and ways to avoid conflicts?</label>
+   <input type="radio" name="wildlife_education" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="wildlife_education" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+   <label>74. Does your agency inform the community of sustainable landscape options that would help resolve issues? (e.g. algal blooms, goose droppings)</label>
+   <input type="radio" name="sustainable_landscape_community" value="1" onclick="updateTotal()"> Yes
+   <input type="radio" name="sustainable_landscape_community" value="0" onclick="updateTotal()"> No
+</div>
+
+<!-- Q75 (max 5) -->
+<div class="question">
+   <label>75. Do staff members consider any of the following “green” criteria when preparing for programs and purchasing program supplies? (max 5 points)</label>
+   <input type="checkbox" name="green_criteria_minimal_packaging" value="1" onclick="updateTotal()"> Minimal Packaging<br>
+   <input type="checkbox" name="green_criteria_recycled" value="1" onclick="updateTotal()"> Recycled/Recyclable Content<br>
+   <input type="checkbox" name="green_criteria_renewable" value="1" onclick="updateTotal()"> Renewable Resource Content<br>
+   <input type="checkbox" name="green_criteria_post_consumer" value="1" onclick="updateTotal()"> Minimum
+
+   <!-- QUESTIONS 76–80 ONLY (within the Programming section) -->
+
+<!-- Q76 (max 5) -->
+<div class="question">
+    <label>76. Does your agency clearly communicate its waste reduction and recycling expectations for: (max 5 points)?</label>
+    <input type="checkbox" name="waste_reduction_staff" value="1" onclick="updateTotal()"> Staff<br>
+    <input type="checkbox" name="waste_reduction_participants" value="1" onclick="updateTotal()"> Program Participants<br>
+    <input type="checkbox" name="waste_reduction_vendors" value="1" onclick="updateTotal()"> Vendors / Contracted Instructors<br>
+    <input type="checkbox" name="waste_reduction_special_events" value="1" onclick="updateTotal()"> Special Events<br>
+    <input type="checkbox" name="waste_reduction_other" value="1" onclick="updateTotal()"> Other:
+    <input type="text" name="waste_reduction_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q77 (max 5) -->
+<div class="question">
+    <label>77. Does your agency clearly communicate its waste reduction and recycling expectations for: (max 5 points)?</label>
+    <input type="checkbox" name="waste_reduction_land_stewardship" value="1" onclick="updateTotal()"> Land Stewardship<br>
+    <input type="checkbox" name="waste_reduction_environmental_education" value="1" onclick="updateTotal()"> Environmental Education<br>
+    <input type="checkbox" name="waste_reduction_other" value="1" onclick="updateTotal()"> Other:
+    <input type="text" name="waste_reduction_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<div class="question">
+    <label>78. Are program staff provided training and encouragement from supervisors in energy and resource conservation (e.g. thermostat settings, lights, recycling, etc.)?</label>
+    <input type="radio" name="staff_training_conservation" value="1" onclick="updateTotal()"> Yes
+    <input type="radio" name="staff_training_conservation" value="0" onclick="updateTotal()"> No
+</div>
+
+<div class="question">
+    <label>79. Are program staff provided training and encouragement from supervisors in energy and resource conservation (e.g. thermostat settings, lights, recycling, etc.)?</label>
+    <input type="radio" name="staff_training_conservation_79" value="1" onclick="updateTotal()"> Yes
+    <input type="radio" name="staff_training_conservation_79" value="0" onclick="updateTotal()"> No
+</div>
+
+<!-- Q80 (max 4 or 5, depending on your preference) -->
+<div class="question">
+    <label>80. Does your agency actively fund and/or apply for grants to support: (max 4 points)?</label>
+    <input type="checkbox" name="grants_environmental_programs" value="1" onclick="updateTotal()"> Environmental Programs<br>
+    <input type="checkbox" name="grants_interpretive_initiatives" value="1" onclick="updateTotal()"> Interpretive Initiatives (signage, brochures, displays, etc.)<br>
+    <input type="checkbox" name="grants_nature_play_areas" value="1" onclick="updateTotal()"> Nature Play Areas<br>
+    <input type="checkbox" name="grants_other" value="1" onclick="updateTotal()"> Other:
+    <input type="text" name="grants_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+<!-- Q81 (max 5) -->
+<div class="question">
+    <label>81. Does your agency clearly communicate its energy conservation expectations for: (1 point each, max 5 points)?</label>
+    <input type="checkbox" name="energy_conservation_facility" value="1" onclick="updateTotal()"> Facility Rentals<br>
+    <input type="checkbox" name="energy_conservation_special_events" value="1" onclick="updateTotal()"> Special Events<br>
+    <input type="checkbox" name="energy_conservation_participants" value="1" onclick="updateTotal()"> Program Participants / Facility Users<br>
+    <input type="checkbox" name="energy_conservation_contractors" value="1" onclick="updateTotal()"> Contracted Vendors / Program Instructors<br>
+    <input type="checkbox" name="energy_conservation_other" value="1" onclick="updateTotal()"> Other:
+    <input type="text" name="energy_conservation_other_text" placeholder="Please list" style="margin-left: 10px;">
+</div>
+
+
+        <!-- 
+          NOTE: 
+          For brevity, I've not re-pasted all Q14–80 here since they are the same 
+          as your final code, except for the fix to Q5's "Other" naming. 
+          Make sure each question block is inserted in the correct place 
+          with onclick="updateTotal()". 
+        -->
+    </form>
+    <p style="text-align: center; margin-top: 30px;">
+      <strong>Final Total Points:</strong> 
+      <span id="totalPoints" class="highlight-points">0</span>
+    </p>
+   <!-- Print Button *Disabled --> 
+<!-- <p style="text-align: center; margin-top: 20px;">
+<button type="button" class="submit-btn" onclick="printForm()">Print Form</button>
+</p> !-->
+
+
+</form>
+
+</p>
+</div> <!-- end of .container -->
+<script>
+function printForm() {
+    // Expand all sections before printing
+    document.querySelectorAll('.section-content.hidden').forEach(section => {
+        section.classList.remove('hidden');
+    });
+
+    // Hide buttons and unnecessary elements before printing
+    const elementsToHide = document.querySelectorAll('button, .submit-btn, .main-title, .section-title, input[type="text"], input[type="email"]');
+    elementsToHide.forEach(el => el.style.display = 'none');
+
+    // Process all inputs
+    document.querySelectorAll("input").forEach(input => {
+        let label = input.closest(".question, .sub-question")?.querySelector("label");
+
+        if (!label) return; // Skip if there's no label
+
+        // Handle radio buttons and checkboxes
+        if ((input.type === "radio" || input.type === "checkbox") && input.checked) {
+            // Display selected answer next to the question
+            let answerText = document.createElement("span");
+            answerText.innerHTML = ` <strong style="color:green;">(✔ Selected)</strong>`;
+            label.appendChild(answerText);
+
+            // If "No" was selected, highlight the question in red
+            if (label.textContent.trim().toLowerCase().endsWith("no")) {
+                label.style.color = "red";
+                label.style.fontWeight = "bold";
+            }
+        }
+
+        // Hide all unselected options
+        if ((input.type === "radio" || input.type === "checkbox") && !input.checked) {
+            input.parentElement.style.display = "none";
+        }
+    });
+
+    // Restore elements after printing
+    elementsToHide.forEach(el => el.style.display = '');
+    document.querySelectorAll("input").forEach(input => input.style.display = "");
+
+    // Remove dynamically added text after printing
+    document.querySelectorAll("strong[style]").forEach(span => span.remove());
+}
+</script>
+
+</body>
+</html>
