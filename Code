@@ -259,7 +259,7 @@
 
         let content = "";
         for (let [key, value] of formData.entries()) {
-          content += `${key}: ${value}n`;
+          content += `${key}: ${value}\n`;
         }
 
         const splitContent = doc.splitTextToSize(content, 180);
@@ -344,7 +344,6 @@
         updateTotal();
       }
  
-</script>
 
     </script>
 </head>
@@ -1206,6 +1205,7 @@ Programming
    <input type="checkbox" name="green_criteria_recycled" value="1" onclick="updateTotal()"> Recycled/Recyclable Content<br>
    <input type="checkbox" name="green_criteria_renewable" value="1" onclick="updateTotal()"> Renewable Resource Content<br>
    <input type="checkbox" name="green_criteria_post_consumer" value="1" onclick="updateTotal()"> Minimum
+  </div>
 
    <!-- QUESTIONS 76–80 ONLY (within the Programming section) -->
 
@@ -1261,6 +1261,7 @@ Programming
     <input type="checkbox" name="energy_conservation_other" value="1" onclick="updateTotal()"> Other:
     <input type="text" name="energy_conservation_other_text" placeholder="Please list" style="margin-left: 10px;">
 </div>
+</div>
 
 
         <!-- 
@@ -1275,15 +1276,11 @@ Programming
       <strong>Final Total Points:</strong> 
       <span id="totalPoints" class="highlight-points">0</span>
     </p>
-   <!-- Print Button *Disabled --> 
-<!-- <p style="text-align: center; margin-top: 20px;">
-<button type="button" class="submit-btn" onclick="printForm()">Print Form</button>
-</p> !-->
+   <!-- Print Button *Disabled -->
+   <!-- <p style="text-align: center; margin-top: 20px;">
+   <button type="button" class="submit-btn" onclick="printForm()">Print Form</button>
+   </p> -->
 
-
-</form>
-
-</p>
 </div> <!-- end of .container -->
 <script>
 function printForm() {
